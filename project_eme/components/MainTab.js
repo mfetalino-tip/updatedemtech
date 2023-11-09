@@ -30,22 +30,22 @@ export default function MainTab({ navigation }) {
         */}
       </ScrollView>
       <View style={styles.rectangle}>
-        <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-          <AntDesign name="tagso" size={50} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Tab2')}>
-          <MaterialIcons name="post-add" size={50} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Tab3')}>
-          <AntDesign name="home" size={50} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Tab4')}>
-          <Feather name="bell" size={50} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
-          <Feather name="user" size={50} color="black" />
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
+                <AntDesign name="tagso" size={40} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Tab2')}>
+                <MaterialIcons name="post-add" size={40} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Tab3')}>
+            <AntDesign name="home" size={40} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Tab4')}>
+                <Feather name="bell" size={40} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
+                <Feather name="user" size={40} color="black" />
+            </TouchableOpacity>
+        </View>
     </View>
   );
 }

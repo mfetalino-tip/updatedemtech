@@ -90,22 +90,23 @@ export default function MainTabTwo({ navigation }) {
             <Text style={styles.commenttext}>Comment</Text>
           </View>
         </TouchableOpacity>
+        
       </ScrollView>
       <View style={styles.rectangle}>
         <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-          <AntDesign name="tagso" size={50} color="black" />
+          <AntDesign name="tagso" size={40} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Tab2')}>
-          <MaterialIcons name="post-add" size={50} color="black" />
+          <MaterialIcons name="post-add" size={40} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Tab3')}>
-          <AntDesign name="home" size={50} color="black" />
+          <AntDesign name="home" size={40} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Tab4')}>
-          <Feather name="bell" size={50} color="black" />
+          <Feather name="bell" size={40} color="black" />
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
-          <Feather name="user" size={50} color="black" />
+          <Feather name="user" size={40} color="black" />
         </TouchableOpacity>
       </View>
       <Modal animationType="slide" transparent={false} visible={isCommentModalVisible}>
