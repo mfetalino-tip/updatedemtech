@@ -78,7 +78,7 @@ export default function MainTabTwo({ navigation }) {
             <Text style={styles.commenttext}>Comment</Text>
           </View>
         </TouchableOpacity>
-        <View>
+        <View> 
           <Text>Olivia</Text>
         </View>
         <View style={styles.kunwari}>

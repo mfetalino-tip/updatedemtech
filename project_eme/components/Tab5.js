@@ -1,113 +1,158 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, Image, TextInput } from 'react-native';
-import { AntDesign } from '@expo/vector-icons';
-import { MaterialIcons } from '@expo/vector-icons';
-import { Feather } from '@expo/vector-icons';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { auth, userSignOut, updateUserProfile } from '../src/firebase';
+import { getDatabase, ref, get, set } from 'firebase/database';
+import { updateEmail, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { AntDesign, MaterialIcons, Feather } from '@expo/vector-icons';
 
-// Import the user picture
-import OliviaPicture from '../components/pictures/olivia.png';
-
-export default function Tab5({ navigation }) {
+export default function ProfileSetting({ navigation }) {
+  const [email, setEmail] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const [studentNumber, setStudentNumber] = useState('');
   const [isEditing, setIsEditing] = useState(false);
-  const [editedEmail, setEditedEmail] = useState('qjmrodrigo@tip.edu.ph');
-  const [editedStudentID, setEditedStudentID] = useState('2012123');
+  const [currentPassword, setCurrentPassword] = useState('');
 
-  const handleEditProfile = () => {
-    setIsEditing(!isEditing);
+  const db = getDatabase();
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const user = auth.currentUser;
+
+        if (user) {
+          const userId = user.uid;
+          const userRef = ref(db, `users/${userId}`);
+          const snapshot = await get(userRef);
+
+          if (snapshot.exists()) {
+            const userData = snapshot.val();
+            setEmail(userData.email || '');
+            setStudentNumber(userData.studentNumber || '');
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching user data:', error.message);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const handleEdit = () => {
+    setIsEditing(true);
   };
 
-  const handleEnter = () => {
-    // Save the edited values here, and exit edit mode
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      const user = auth.currentUser;
+
+      // Prompt user to re-enter their password for reauthentication
+      const currentPassword = prompt('Please enter your password for verification:');
+
+      // Re-authenticate the user before making changes
+      const credential = EmailAuthProvider.credential(user.email, currentPassword);
+      await reauthenticateWithCredential(user, credential);
+
+      // Update Realtime Database
+      const userId = user.uid;
+      await set(ref(db, `users/${userId}`), {
+        email: newEmail || email,
+        studentNumber: studentNumber,
+      });
+
+      if (newEmail && newEmail !== email) {
+        // Update user's email in Authentication
+        await updateEmail(user, newEmail);
+      }
+
+      // Update Authentication profile
+      await updateUserProfile(user, { displayName: studentNumber });
+
+      setIsEditing(false);
+      alert('Profile updated successfully!');
+    } catch (error) {
+      alert('Error updating profile: ' + error.message);
+      console.error('Error updating profile:', error.message);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await userSignOut(auth);
+      navigation.navigate('Login');
+    } catch (error) {
+      console.error('Error logging out:', error.message);
+    }
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.scrollcontainer}>
-        {/* User Profile Section */}
-        <View style={styles.profileContainer}>
-          <Image
-            source={OliviaPicture}
-            style={styles.profileImage}
-          />
-          <Text style={styles.profileName}>Olivia Rodrigo</Text>
-          <View style={styles.editButtonContainer}>
-            {isEditing ? (
-              // "Back" button for canceling the edit operation
-              <TouchableOpacity onPress={handleEditProfile}>
-                <Text style={styles.backButton}>Back</Text>
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity onPress={handleEditProfile}>
-                <Feather name="edit" size={24} color="black" />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Email and Student ID Section with Icons */}
-          <View style={styles.userInfoContainer}>
-            {isEditing ? (
-              <>
-                <View style={styles.userInfoItem}>
-                  <MaterialIcons name="email" size={24} color="black" />
-                  <TextInput
-                    style={[styles.userInfoTextInput, styles.emailInput]}
-                    value={editedEmail}
-                    onChangeText={(text) => setEditedEmail(text)}
-                  />
-                </View>
-                <View style={styles.userInfoItem}>
-                  <AntDesign name="idcard" size={24} color="black" />
-                  <TextInput
-                    style={[styles.userInfoTextInput, styles.studentIDInput]}
-                    value={editedStudentID}
-                    onChangeText={(text) => setEditedStudentID(text)}
-                  />
-                </View>
-                <TouchableOpacity onPress={handleEnter} style={styles.enterButton}>
-                  <Text style={styles.enterButtonText}>Enter</Text>
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                <View style={[styles.userInfoItem, styles.emailSection]}>
-                  <MaterialIcons name="email" size={24} color="black" />
-                  <Text style={styles.userInfoText}>Email: {editedEmail}</Text>
-                </View>
-                <View style={[styles.userInfoItem, styles.studentIDSection]}>
-                  <AntDesign name="idcard" size={24} color="black" />
-                  <Text style={styles.userInfoText}>Student ID: {editedStudentID}</Text>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-
-        {/* Logout Button */}
-        <View style={styles.logoutcontainer}>
-          <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.logoutext}>LOG OUT</Text>
-          </TouchableOpacity>
-        </View>
+      <Text style={styles.title}>Profile Settings</Text>
+      <View style={styles.inputborder}>
+        <TextInput
+          style={styles.inputtext}
+          placeholder="Email"
+          placeholderTextColor="#E9D735"
+          value={isEditing ? newEmail : email}
+          onChangeText={(text) => setNewEmail(text)} // <-- Set the new email when editing
+          editable={isEditing}
+        />
       </View>
-
-      <View style={styles.rectangle}>
-            <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-                <AntDesign name="tagso" size={40} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Tab2')}>
-                <MaterialIcons name="post-add" size={40} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Tab3')}>
-            <AntDesign name="home" size={40} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Tab4')}>
-                <Feather name="bell" size={40} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
-                <Feather name="user" size={40} color="black" />
-            </TouchableOpacity>
+      <View style={styles.inputborder}>
+        <TextInput
+          style={styles.inputtext}
+          placeholder="Student Number"
+          placeholderTextColor="#E9D735"
+          value={studentNumber}
+          onChangeText={(text) => setStudentNumber(text)}
+          editable={isEditing}
+        />
+      </View>
+      {isEditing && (
+        <View style={styles.inputborder}>
+          <TextInput
+            style={styles.inputtext}
+            placeholder="Current Password"
+            placeholderTextColor="#E9D735"
+            secureTextEntry={true}
+            value={currentPassword}
+            onChangeText={(text) => setCurrentPassword(text)}
+          />
         </View>
+      )}
+      <View style={styles.buttonContainer}>
+        {isEditing ? (
+          <TouchableOpacity onPress={handleSave}>
+            <Text style={styles.buttontext}>Save</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={handleEdit}>
+            <Text style={styles.buttontext}>Edit Profile</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      <View style={styles.buttonContainer}>
+        <TouchableOpacity onPress={handleLogout}>
+          <Text style={styles.buttontext}>Logout</Text>
+        </TouchableOpacity>
+      </View>
+      {/* Navigation Icons */}
+      <View style={styles.rectangle}>
+        <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
+          <AntDesign name="tagso" size={40} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Tab2')}>
+          <MaterialIcons name="post-add" size={40} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Tab3')}>
+          <AntDesign name="home" size={40} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Tab4')}>
+          <Feather name="bell" size={40} color="black" />
+        </TouchableOpacity>
+        {/* The current screen is already 'Tab5', so no need to navigate */}
+        <Feather name="user" size={40} color="black" />
+      </View>
     </View>
   );
 }
@@ -115,26 +160,43 @@ export default function Tab5({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
-  },
-  scrollcontainer: {
-    flex: 1,
-    backgroundColor: 'white',
-  },
-  profileContainer: {
+    backgroundColor: '#394B58',
     alignItems: 'center',
-    padding: 50,
+    padding: 20,
   },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  profileName: {
+  title: {
     fontSize: 24,
+    color: '#E9D735',
     fontWeight: 'bold',
-    marginTop: 10,
+    marginBottom: 20,
   },
+  inputborder: {
+    borderBottomColor: 'white',
+    borderBottomWidth: 1,
+    width: '100%',
+    marginBottom: 25,
+  },
+  inputtext: {
+    fontSize: 15,
+    fontStyle: 'italic',
+    color: '#E9D735',
+    paddingBottom: 20,
+    paddingTop: 15,
+  },
+  buttonContainer: {
+    backgroundColor: '#E9D735',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    alignItems: 'center',
+    borderRadius: 5,
+    marginVertical: 10,
+  },
+  buttontext: {
+    color: 'black',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  // Styles for the navigation icons
   rectangle: {
     width: 'auto',
     height: 55,
@@ -142,78 +204,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-  },
-  editButtonContainer: {
-    marginTop: 10,
-  },
-  logoutcontainer: {
-    backgroundColor: '#EAD83B',
-    padding: 5,
-    marginLeft: 130,
-    marginRight: 130,
-    marginTop: 20,
-  },
-  logoutext: {
-    fontWeight: 'bold',
-    fontSize: 20,
-    textAlign: 'center',
-  },
-  userInfoContainer: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  userInfoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  userInfoText: {
-    fontSize: 16,
-    marginLeft: 10,
-  },
-  userInfoTextInput: {
-    fontSize: 16,
-    marginLeft: 10,
-    width: 200,
-    borderWidth: 1,
-    borderColor: '#ccc',
-    borderRadius: 5,
-    padding: 5,
-  },
-  enterButton: {
-    marginTop: 10,
-    backgroundColor: 'blue',
-    borderRadius: 5,
-    padding: 10,
-    width: 100,
-    alignItems: 'center',
-  },
-  enterButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  emailInput: {
-    backgroundColor: '#EFEFEF',
-  },
-  studentIDInput: {
-    backgroundColor: '#EFEFEF',
-  },
-  emailSection: {
-    backgroundColor: '#EFEFEF',
-    padding: 10,
-    borderRadius: 5,
-  },
-  studentIDSection: {
-    backgroundColor: '#EFEFEF',
-    padding: 10,
-    borderRadius: 5,
-  },
-  backButton: {
-    fontSize: 16,
-    color: 'blue',
-    fontWeight: 'bold',
-    marginTop: 10,
-    textAlign: 'center',
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
   },
 });

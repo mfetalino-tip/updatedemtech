@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, Button, StyleSheet, Image, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TextInput, TouchableOpacity } from 'react-native';
 import { auth } from '../src/firebase'; // Import Firebase auth
-import { createUserWithEmailAndPassword } from 'firebase/auth'; // Import Firebase createUserWithEmailAndPassword
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'; // Import Firebase createUserWithEmailAndPassword
+import { getDatabase, ref, set } from "firebase/database";
 
 export default function SignUpScreen({ navigation }) {
   const [studentNumber, setStudentNumber] = useState('');
@@ -10,14 +11,43 @@ export default function SignUpScreen({ navigation }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [signupSuccess, setSignupSuccess] = useState(false);
 
+  const db = getDatabase();
+
   const handleSignup = async () => {
     if (password !== confirmPassword) {
       alert("Passwords do not match");
       return;
     }
 
+    if (!email.toLowerCase().endsWith("@tip.edu.ph")) {
+      alert("Invalid Email");
+      return;
+    }
+
+    if (!/^\d{7}$/.test(studentNumber)) {
+      alert("Invalid Student Number");
+      return;
+    }
+
+    if (password.length < 8) {
+      alert("Weak password. Please use at least 8 characters.");
+      return;
+    }
+
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      // Create user in Authentication
+      const authUser = await createUserWithEmailAndPassword(auth, email, password);
+
+      // Update user profile in Authentication (displayName)
+      await updateProfile(authUser.user, { displayName: studentNumber });
+
+      // Update Realtime Database
+      const userId = authUser.user.uid;
+      await set(ref(db, `users/${userId}`), {
+        email: email,
+        studentNumber: studentNumber,
+      });
+
       setSignupSuccess(true);
       setTimeout(() => {
         navigation.navigate('NewAccount');
@@ -80,7 +110,7 @@ export default function SignUpScreen({ navigation }) {
         />
       </View>
       <TouchableOpacity
-        style={[styles.buttonContainer, { width: 200, borderRadius: 10 }]} // Corrected the style object
+        style={[styles.buttonContainer, { width: 200, borderRadius: 10 }]}
         onPress={handleSignup}
       >
         <Text style={styles.buttontext}>SIGNUP</Text>
@@ -95,6 +125,7 @@ export default function SignUpScreen({ navigation }) {
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
