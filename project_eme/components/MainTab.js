@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons, AntDesign, MaterialIcons, Feather, FontAwesome5 } from '@expo/vector-icons';
-
+ 
 export default function MainTab({ navigation }) {
   return (
     <View style={styles.container}>
@@ -17,10 +17,10 @@ export default function MainTab({ navigation }) {
       </View>
       <View style={styles.navigationSearch}>
         <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-          <Text style={styles.navigationText}>Claimed</Text>
+          <Text style={styles.navigationText}>FOR YOU</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('MainTabTwo')}>
-          <Text style={styles.navigationText}>Unclaimed</Text>
+          <Text style={styles.navigationText}>YOUR POSTS</Text>
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollContainer}>
@@ -30,13 +30,12 @@ export default function MainTab({ navigation }) {
         */}
       </ScrollView>
       <View style={styles.rectangle}>
-            <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-                <AntDesign name="tagso" size={40} color="black" />
-            </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
                 <MaterialIcons name="post-add" size={40} color="black" />
             </TouchableOpacity>
-    
+            <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
+            <AntDesign name="home" size={40} color="black" />
+            </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
                 <Feather name="user" size={40} color="black" />
             </TouchableOpacity>
@@ -44,7 +43,7 @@ export default function MainTab({ navigation }) {
     </View>
   );
 }
-
+ 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -86,8 +85,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   headingText: {
-    marginTop: 20, // Adjusted margin for better alignment
-    fontSize: 30, // Increased font size
+    marginTop: 20, 
+    fontSize: 30, 
     fontWeight: 'bold',
     textAlign: 'center',
   },
@@ -103,4 +102,4 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
   },
-});
+}); 

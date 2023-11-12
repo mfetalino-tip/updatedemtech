@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Pressable} from 'react-native';
 import { Ionicons, AntDesign, MaterialIcons } from '@expo/vector-icons';
-
+ 
 import { Feather } from '@expo/vector-icons';
 import { FontAwesome5 } from '@expo/vector-icons';
-
+ 
 export default function MainTabTwo({ navigation }) {
   const [isCommentModalVisible, setCommentModalVisible] = useState(false);
   const [comment, setComment] = useState('');
-
+ 
   const toggleCommentModal = () => {
     setCommentModalVisible(!isCommentModalVisible);
   };
-
+ 
   const handleComment = () => {
     if (comment.trim() !== '') {
       console.log('Comment:', comment);
@@ -20,7 +20,7 @@ export default function MainTabTwo({ navigation }) {
       toggleCommentModal();
     }
   };
-
+ 
   return (
     <View style={styles.container}>
       <Text style={styles.HeadingText}>Lost & Found</Text>
@@ -35,10 +35,10 @@ export default function MainTabTwo({ navigation }) {
       </View>
       <View style={styles.NavigationSearch}>
         <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-          <Text style={styles.NavigationText}>Claimed</Text>
+          <Text style={styles.NavigationText}>FOR YOU</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={() => navigation.navigate('MainTabTwo')}>
-          <Text style={styles.NavigationText}>Unclaimed</Text>
+          <Text style={styles.NavigationText}>YOUR POSTS</Text>
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollcontainer}>
@@ -90,19 +90,18 @@ export default function MainTabTwo({ navigation }) {
             <Text style={styles.commenttext}>Comment</Text>
           </View>
         </TouchableOpacity>
-        
       </ScrollView>
       <View style={styles.rectangle}>
-        <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-          <AntDesign name="tagso" size={40} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('CreatePost.js')}>
-          <MaterialIcons name="post-add" size={40} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
-          <Feather name="user" size={40} color="black" />
-        </TouchableOpacity>
-      </View>
+            <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
+                <MaterialIcons name="post-add" size={40} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
+            <AntDesign name="home" size={40} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
+                <Feather name="user" size={40} color="black" />
+            </TouchableOpacity>
+        </View>
       <Modal animationType="slide" transparent={false} visible={isCommentModalVisible}>
         <View style={styles.commentModalContainer}>
           <View style={styles.commentHeader}>
@@ -127,12 +126,13 @@ export default function MainTabTwo({ navigation }) {
     </View>
   );
 }
-
+ 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#394B58',
     padding: 10,
+ 
   },
   scrollcontainer: {
     backgroundColor: 'white',
@@ -155,6 +155,7 @@ const styles = StyleSheet.create({
   },
   rectangle: {
     flexDirection: 'row',
+    flex: 1,
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: '#485E6E',
@@ -164,6 +165,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
+    zIndex: 1,
   },
   searchcontainer: {
     backgroundColor: '#D9D9D9',
@@ -181,17 +183,16 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   SearchIcon: {
-    fontSize: 30, // Increase the search icon size
-    color: '#485E6E', // Change the color to match the theme
+    fontSize: 30, 
+    color: '#485E6E', 
   },
   commentcontainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: '#D9D9D9',
     marginHorizontal: 20,
     marginVertical: 10,
     padding: 10,
-    justifyContent: 'space-between',
+    justifyContent: 'space-evenly',
   },
   commenttext: {
     fontSize: 20,
@@ -206,17 +207,17 @@ const styles = StyleSheet.create({
   },
   commentModalContainer: {
     flex: 1,
-    backgroundColor: '#F0F0F0', // Light gray background
+    backgroundColor: '#F0F0F0',
   },
   commentHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#485E6E', // Match the theme color
+    borderBottomColor: '#485E6E', 
     paddingBottom: 20,
     paddingTop: 40,
-    backgroundColor: '#485E6E', // Dark header background
+    backgroundColor: '#485E6E', 
   },
   backButton: {
     position: 'absolute',
@@ -228,30 +229,30 @@ const styles = StyleSheet.create({
   backIcon: {
     fontSize: 24,
     marginRight: 5,
-    color: 'white', // White back icon color
+    color: 'white', 
   },
   commentHeaderText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: 'white', // White header text color
+    color: 'white', 
   },
   commentInput: {
-    padding: 15, // Increased padding
+    padding: 15, 
     fontSize: 18,
     borderBottomWidth: 1,
-    borderBottomColor: '#DADADA', // Slightly lighter border color
-    margin: 15, // Increased margin
-    paddingBottom: 25, // Increased bottom padding
-    backgroundColor: 'white', // White input background
-    borderRadius: 5, // Rounded corners
-    color: '#333', // Dark gray text color
+    borderBottomColor: '#DADADA', 
+    margin: 15, 
+    paddingBottom: 25, 
+    backgroundColor: 'white', 
+    borderRadius: 5,
+    color: '#333', 
   },
   commentButton: {
-    backgroundColor: '#485E6E', // Facebook's blue theme color
+    backgroundColor: '#485E6E', 
     alignItems: 'center',
     justifyContent: 'center',
     padding: 20,
-    margin: 15, // Increased margin
-    borderRadius: 5, // Rounded corners
+    margin: 15, 
+    borderRadius: 5, 
   },
 });

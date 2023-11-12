@@ -33,6 +33,10 @@ const ItemForm = () => {
 
     const image = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true, 
+      quality: 0.5, 
+      aspect: [4, 3], 
+      base64: true, 
     });
     if (!image.cancelled) {
       setSelectedImage({ uri: image.uri, base64: image.base64 });
@@ -59,7 +63,7 @@ const ItemForm = () => {
         postItem('');
       }
     };
-
+      
     const postItem = (imageUrl) => {
       const itemsRef = ref(db, 'items');
 
@@ -126,36 +130,47 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'white', // Updated background color
+    backgroundColor: '#F6F6F6',
     padding: 20,
+    borderWidth: 2,
+    borderColor: '#394B58', // Outer border color
+    borderRadius: 5, // Border radius
   },
   title: {
-    fontSize: 24,
+    fontSize: 30,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
+  },
+  inputContainer: {
+    width: '75%',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E9D735', // Input container border color
+    borderRadius: 5,
   },
   input: {
-    backgroundColor: '#F6F6F6', // Updated background color
+    backgroundColor: '#fff',
     padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
     width: '100%',
+    height: 150,
+  },
+  imageButtonContainer: {
+    marginBottom: 20,
   },
   imageButton: {
-    backgroundColor: '#E9D735', // Updated background color
+    backgroundColor: '#E9D735',
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
-    marginBottom: 10,
   },
   imageButtonText: {
     fontSize: 16,
+    color: '#fff',
   },
   previewImage: {
-    width: 150, // Updated width
-    height: 150, // Updated height
+    width: 150,
+    height: 150,
     borderRadius: 5,
   },
 });
-
 export default ItemForm; 

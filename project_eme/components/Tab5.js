@@ -1,29 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { auth, userSignOut, updateUserProfile } from '../src/firebase';
 import { getDatabase, ref, get, set } from 'firebase/database';
 import { updateEmail, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { AntDesign, MaterialIcons, Feather } from '@expo/vector-icons';
-
+import YourImage from './pictures/profile.png';
+ 
 export default function ProfileSetting({ navigation }) {
   const [email, setEmail] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [studentNumber, setStudentNumber] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
-
+ 
   const db = getDatabase();
-
+ 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const user = auth.currentUser;
-
+ 
         if (user) {
           const userId = user.uid;
           const userRef = ref(db, `users/${userId}`);
           const snapshot = await get(userRef);
-
+ 
           if (snapshot.exists()) {
             const userData = snapshot.val();
             setEmail(userData.email || '');
@@ -34,40 +35,37 @@ export default function ProfileSetting({ navigation }) {
         console.error('Error fetching user data:', error.message);
       }
     };
-
+ 
     fetchUserData();
   }, []);
-
+ 
   const handleEdit = () => {
     setIsEditing(true);
   };
-
+ 
   const handleSave = async () => {
     try {
       const user = auth.currentUser;
-
-      // Prompt user to re-enter their password for reauthentication
-      const currentPassword = prompt('Please enter your password for verification:');
-
+ 
       // Re-authenticate the user before making changes
       const credential = EmailAuthProvider.credential(user.email, currentPassword);
       await reauthenticateWithCredential(user, credential);
-
+ 
       // Update Realtime Database
       const userId = user.uid;
       await set(ref(db, `users/${userId}`), {
         email: newEmail || email,
         studentNumber: studentNumber,
       });
-
+ 
       if (newEmail && newEmail !== email) {
         // Update user's email in Authentication
         await updateEmail(user, newEmail);
       }
-
+ 
       // Update Authentication profile
       await updateUserProfile(user, { displayName: studentNumber });
-
+ 
       setIsEditing(false);
       alert('Profile updated successfully!');
     } catch (error) {
@@ -75,7 +73,7 @@ export default function ProfileSetting({ navigation }) {
       console.error('Error updating profile:', error.message);
     }
   };
-
+ 
   const handleLogout = async () => {
     try {
       await userSignOut(auth);
@@ -84,10 +82,19 @@ export default function ProfileSetting({ navigation }) {
       console.error('Error logging out:', error.message);
     }
   };
-
+ 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Profile Settings</Text>
+      <View>
+          <Image source={YourImage} style={styles.profileimage} />
+      </View>
+      <TextInput
+        style={styles.profiletext}
+        placeholder="Name"
+        placeholderTextColor="#E9D735"
+        editable={isEditing}
+        />
       <View style={styles.inputborder}>
         <TextInput
           style={styles.inputtext}
@@ -138,20 +145,20 @@ export default function ProfileSetting({ navigation }) {
       </View>
       {/* Navigation Icons */}
       <View style={styles.rectangle}>
-        <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-          <AntDesign name="tagso" size={40} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
-          <MaterialIcons name="post-add" size={40} color="black" />
-        </TouchableOpacity>
-    
-        {/* The current screen is already 'Tab5', so no need to navigate */}
-        <Feather name="user" size={40} color="black" />
-      </View>
+            <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
+                <MaterialIcons name="post-add" size={40} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
+            <AntDesign name="home" size={40} color="black" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
+                <Feather name="user" size={40} color="black" />
+            </TouchableOpacity>
+        </View>
     </View>
   );
 }
-
+ 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -164,6 +171,7 @@ const styles = StyleSheet.create({
     color: '#E9D735',
     fontWeight: 'bold',
     marginBottom: 20,
+    marginTop: 50,
   },
   inputborder: {
     borderBottomColor: 'white',
@@ -191,17 +199,27 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-  // Styles for the navigation icons
   rectangle: {
-    width: 'auto',
-    height: 55,
-    backgroundColor: '#485E6E',
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     alignItems: 'center',
+    backgroundColor: '#485E6E',
+    height: 70,
+    paddingHorizontal: 20,
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
   },
+  profileimage: {
+    width: 80,
+    height: 80,
+    resizeMode: 'contain',
+  },
+  profiletext: {
+    marginTop: 5,
+    fontSize: 20,
+    textAlign: 'center',
+    color: '#E9D735',
+  }
 });
