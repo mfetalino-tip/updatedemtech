@@ -19,7 +19,9 @@ import {
   getDownloadURL,
 } from 'firebase/storage';
 
-const ItemForm = () => {
+import { MaterialIcons, AntDesign, Feather } from '@expo/vector-icons';
+
+const ItemForm = ({ navigation }) => {
   const [itemText, setItemText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -119,6 +121,18 @@ const ItemForm = () => {
       />
 
       {isSubmitting && <ActivityIndicator size="large" color="#E9D735" />}
+
+      <View style={styles.navigationIcons}>
+        <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
+          <MaterialIcons name="post-add" size={40} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
+          <AntDesign name="home" size={40} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
+          <Feather name="user" size={40} color="black" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -130,31 +144,24 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F6F6F6',
     padding: 20,
     borderWidth: 2,
-    borderColor: '#394B58', // Outer border color
-    borderRadius: 5, // Border radius
+    borderColor: '#394B58',
+    borderRadius: 10,
   },
   title: {
     fontSize: 30,
     fontWeight: 'bold',
     marginBottom: 20,
-  },
-  inputContainer: {
-    width: '75%',
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#E9D735', // Input container border color
-    borderRadius: 5,
+    color: 'black',
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: '#FFF',
     padding: 10,
     width: '100%',
     height: 150,
-  },
-  imageButtonContainer: {
+    borderWidth: 1,
+    borderRadius: 5,
     marginBottom: 20,
   },
   imageButton: {
@@ -162,15 +169,30 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
+    marginBottom: 20,
   },
   imageButtonText: {
     fontSize: 16,
-    color: '#fff',
+    color: '#FFF',
   },
   previewImage: {
     width: 150,
     height: 150,
     borderRadius: 5,
   },
+  navigationIcons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: '#485E6E',
+    height: 70,
+    paddingHorizontal: 20,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    tintColor: '#000000'
+  },
 });
-export default ItemForm; 
+
+export default ItemForm;
