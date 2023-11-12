@@ -1,13 +1,28 @@
 import React, { useState } from 'react';
-import { View, TextInput, Button, Image, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import {
+  View,
+  TextInput,
+  Button,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Text,
+  Dimensions,
+  ActivityIndicator,
+} from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { getDatabase, ref, push } from 'firebase/database';
-import { getStorage, ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
+import {
+  getStorage,
+  ref as storageRef,
+  uploadString,
+  getDownloadURL,
+} from 'firebase/storage';
 
-const TweetForm = () => {
-  const [tweetText, setTweetText] = useState('');
+const ItemForm = () => {
+  const [itemText, setItemText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
-  const [expanded, setExpanded] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const selectImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -16,13 +31,17 @@ const TweetForm = () => {
       return;
     }
 
-    const image = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images });
+    const image = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    });
     if (!image.cancelled) {
       setSelectedImage({ uri: image.uri, base64: image.base64 });
     }
   };
 
-  const handlePost = async () => {
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+
     const storage = getStorage();
     const db = getDatabase();
 
@@ -30,34 +49,36 @@ const TweetForm = () => {
       if (selectedImage) {
         const imageRef = storageRef(storage, `images/${selectedImage.uri}`);
 
-        await uploadString(imageRef, selectedImage.base64, 'base64').then(async () => {
-          const url = await getDownloadURL(imageRef);
-          postTweet(url);
-        });
+        await uploadString(imageRef, selectedImage.base64, 'base64').then(
+          async () => {
+            const url = await getDownloadURL(imageRef);
+            postItem(url);
+          }
+        );
       } else {
-        postTweet('');
+        postItem('');
       }
     };
 
-    const postTweet = (imageUrl) => {
-      const tweetsRef = ref(db, 'tweets');
+    const postItem = (imageUrl) => {
+      const itemsRef = ref(db, 'items');
 
-      const tweetData = {
-        text: tweetText,
+      const itemData = {
+        text: itemText,
         image: imageUrl,
         timestamp: new Date().getTime(),
       };
 
-      push(tweetsRef, tweetData)
+      push(itemsRef, itemData)
         .then(() => {
-          setTweetText('');
+          setIsSubmitting(false);
+          setItemText('');
           setSelectedImage(null);
-          setExpanded(false);
-          console.log('Tweet posted successfully!');
-          navigation.navigate('PostedTweets', { newTweet: tweetData});
+          console.log('Item posted successfully!');
         })
         .catch((error) => {
-          console.error('Error posting tweet:', error);
+          setIsSubmitting(false);
+          console.error('Error posting item:', error);
         });
     };
 
@@ -66,66 +87,72 @@ const TweetForm = () => {
 
   return (
     <View style={styles.container}>
-      {!expanded ? (
-        <TouchableOpacity style={styles.box} onPress={() => setExpanded(true)}>
-          <Text style={styles.boxText}>Lost or found something? Share it!</Text>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.expandedBox}>
-          <TextInput
-            style={styles.input}
-            placeholder="What's on your mind?"
-            value={tweetText}
-            onChangeText={(text) => setTweetText(text)}
-            multiline
-          />
-          {selectedImage && <Image source={{ uri: selectedImage.uri }} style={styles.image} />}
-          <Button title="Select Image" onPress={selectImage} />
-          <Button title="Tweet" onPress={handlePost} />
-        </View>
-      )}
+      <Text style={styles.title}>Post an Item</Text>
+
+      <TextInput
+        style={styles.input}
+        placeholder="What did you lose or find?"
+        value={itemText}
+        onChangeText={(text) => setItemText(text)}
+        multiline
+      />
+
+      <TouchableOpacity style={styles.imageButton} onPress={selectImage}>
+        {selectedImage ? (
+          <Image source={{ uri: selectedImage.uri }} style={styles.previewImage} />
+        ) : (
+          <Text style={styles.imageButtonText}>Upload Image</Text>
+        )}
+      </TouchableOpacity>
+
+      <Button
+        title="Post Item"
+        onPress={handleSubmit}
+        disabled={isSubmitting || !itemText}
+      />
+
+      {isSubmitting && <ActivityIndicator size="large" color="#E9D735" />}
     </View>
   );
 };
+
+const { height } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#E9D735',
+    padding: 20,
   },
-  box: {
-    width: 250,
-    height: 150,
-    borderRadius: 10,
-    backgroundColor: 'lightblue',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  boxText: {
-    textAlign: 'center',
-    fontSize: 16,
-  },
-  expandedBox: {
-    width: '80%',
-    padding: 10,
-    borderRadius: 10,
-    backgroundColor: 'lightblue',
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 10,
   },
   input: {
-    marginBottom: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    backgroundColor: 'white',
+    padding: 10,
     borderRadius: 5,
-  },
-  image: {
-    width: 150,
-    height: 150,
-    resizeMode: 'cover',
     marginBottom: 10,
+    width: '100%',
+  },
+  imageButton: {
+    backgroundColor: '#F6F6F6',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  imageButtonText: {
+    fontSize: 16,
+  },
+  previewImage: {
+    width: 150, // Adjust the width to a proper value
+    height: 150, // Set a proper height to maintain aspect ratio
+    borderRadius: 5,
   },
 });
 
-export default TweetForm;
+export default ItemForm;

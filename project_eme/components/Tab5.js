@@ -144,12 +144,7 @@ export default function ProfileSetting({ navigation }) {
         <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
           <MaterialIcons name="post-add" size={40} color="black" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Tab3')}>
-          <AntDesign name="home" size={40} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Tab4')}>
-          <Feather name="bell" size={40} color="black" />
-        </TouchableOpacity>
+    
         {/* The current screen is already 'Tab5', so no need to navigate */}
         <Feather name="user" size={40} color="black" />
       </View>
