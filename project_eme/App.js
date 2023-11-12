@@ -7,8 +7,7 @@ import NewAccount from './components/NewAccount';
 import MainTab from './components/MainTab';
 import MainTabTwo from './components/MainTabTwo';
 import Tab2 from './components/Tab2';
-import Tab3 from './components/Tab3';
-import Tab4 from './components/Tab4';
+
 import Tab5 from './components/Tab5';
 import CreatePost from './components/CreatePost';
 
@@ -25,8 +24,8 @@ export default function App() {
         <Stack.Screen name="MainTab" component={MainTab} />
         <Stack.Screen name="MainTabTwo" component={MainTabTwo} />
         <Stack.Screen name="CreatePost" component={CreatePost} />
-        <Stack.Screen name="Tab3" component={Tab3} />
-        <Stack.Screen name="Tab4" component={Tab4} />
+      
+        
         <Stack.Screen name="Tab5" component={Tab5} />
       </Stack.Navigator>
     </NavigationContainer>

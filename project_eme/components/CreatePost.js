@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, TextInput, Button, Image, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import { getDatabase, ref, push } from '@react-native-firebase/database';
-import { getStorage, ref as storageRef, uploadString, getDownloadURL } from '@react-native-firebase/storage';
+import { getDatabase, ref, push } from 'firebase/database';
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from 'firebase/storage';
 
 const TweetForm = () => {
   const [tweetText, setTweetText] = useState('');
