@@ -54,6 +54,7 @@ const TweetForm = () => {
           setSelectedImage(null);
           setExpanded(false);
           console.log('Tweet posted successfully!');
+          navigation.navigate('PostedTweets', { newTweet: tweetData});
         })
         .catch((error) => {
           console.error('Error posting tweet:', error);
@@ -72,6 +73,7 @@ const TweetForm = () => {
       ) : (
         <View style={styles.expandedBox}>
           <TextInput
+            style={styles.input}
             placeholder="What's on your mind?"
             value={tweetText}
             onChangeText={(text) => setTweetText(text)}
@@ -102,18 +104,27 @@ const styles = StyleSheet.create({
   },
   boxText: {
     textAlign: 'center',
+    fontSize: 16,
   },
   expandedBox: {
-    width: 300,
+    width: '80%',
     padding: 10,
     borderRadius: 10,
     backgroundColor: 'lightblue',
   },
+  input: {
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 5,
+  },
   image: {
-    width: 100,
-    height: 100,
+    width: 150,
+    height: 150,
     resizeMode: 'cover',
-    marginVertical: 10,
+    marginBottom: 10,
   },
 });
 
