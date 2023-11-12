@@ -16,7 +16,7 @@ return (
             <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
                 <AntDesign name="tagso" size={40} color="black" />
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Tab2')}>
+            <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
                 <MaterialIcons name="post-add" size={40} color="black" />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('Tab3')}>
