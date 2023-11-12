@@ -99,7 +99,10 @@ const ItemForm = () => {
 
       <TouchableOpacity style={styles.imageButton} onPress={selectImage}>
         {selectedImage ? (
-          <Image source={{ uri: selectedImage.uri }} style={styles.previewImage} />
+          <Image
+            source={{ uri: selectedImage.uri }}
+            style={styles.previewImage}
+          />
         ) : (
           <Text style={styles.imageButtonText}>Upload Image</Text>
         )}
@@ -123,7 +126,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#E9D735',
+    backgroundColor: 'white', // Updated background color
     padding: 20,
   },
   title: {
@@ -132,14 +135,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   input: {
-    backgroundColor: 'white',
+    backgroundColor: '#F6F6F6', // Updated background color
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
     width: '100%',
   },
   imageButton: {
-    backgroundColor: '#F6F6F6',
+    backgroundColor: '#E9D735', // Updated background color
     padding: 10,
     borderRadius: 5,
     alignItems: 'center',
@@ -149,10 +152,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   previewImage: {
-    width: 150, // Adjust the width to a proper value
-    height: 150, // Set a proper height to maintain aspect ratio
+    width: 150, // Updated width
+    height: 150, // Updated height
     borderRadius: 5,
   },
 });
 
-export default ItemForm;
+export default ItemForm; 
