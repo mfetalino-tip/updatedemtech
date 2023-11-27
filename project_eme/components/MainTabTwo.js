@@ -203,7 +203,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#D9D9D9',
     marginHorizontal: 20,
     marginVertical: 10,
-    padding: 20,
+    padding: 70,
   },
   commentModalContainer: {
     flex: 1,
