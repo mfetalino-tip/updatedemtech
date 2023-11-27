@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   TextInput,
@@ -7,16 +7,29 @@ import {
   StyleSheet,
   Text,
   ActivityIndicator,
-  Alert
+  Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { getDatabase, ref, push } from 'firebase/database';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 const ItemForm = ({ navigation }) => {
   const [itemText, setItemText] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
+
+  useEffect(() => {
+    const auth = getAuth();
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserEmail(user.email);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const selectImage = async () => {
     let pickerResult = await ImagePicker.launchImageLibraryAsync({
@@ -58,6 +71,7 @@ const ItemForm = ({ navigation }) => {
         text: itemText,
         image: imageUrl,
         timestamp: Date.now(),
+        userEmail: userEmail, // Add the user's email to the item data
       };
 
       await push(itemsRef, itemData);
@@ -104,6 +118,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    marginBottom: 100,
     backgroundColor: '#F0F2F5',
     justifyContent: 'flex-start',
   },

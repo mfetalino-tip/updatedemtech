@@ -1,18 +1,35 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput, Modal, Pressable} from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Image,Text, ScrollView, TouchableOpacity, TextInput, Modal, Pressable } from 'react-native';
 import { Ionicons, AntDesign, MaterialIcons } from '@expo/vector-icons';
- 
 import { Feather } from '@expo/vector-icons';
 import { FontAwesome5 } from '@expo/vector-icons';
- 
+
+import { getDatabase, ref, onValue } from 'firebase/database';
+
 export default function MainTabTwo({ navigation }) {
   const [isCommentModalVisible, setCommentModalVisible] = useState(false);
   const [comment, setComment] = useState('');
- 
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const db = getDatabase();
+    const itemsRef = ref(db, 'items');
+
+    const unsubscribe = onValue(itemsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const itemsArray = Object.values(data);
+        setItems(itemsArray.reverse());
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
   const toggleCommentModal = () => {
     setCommentModalVisible(!isCommentModalVisible);
   };
- 
+
   const handleComment = () => {
     if (comment.trim() !== '') {
       console.log('Comment:', comment);
@@ -20,7 +37,7 @@ export default function MainTabTwo({ navigation }) {
       toggleCommentModal();
     }
   };
- 
+
   return (
     <View style={styles.container}>
       <Text style={styles.HeadingText}>Lost & Found</Text>
@@ -42,66 +59,26 @@ export default function MainTabTwo({ navigation }) {
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollcontainer}>
-        <View>
-          <Text>Olivia Rodrigo</Text>
-        </View>
-        <View style={styles.kunwari}>
-          <Text style={styles.commenttext}>piktur</Text>
-        </View>
-        <TouchableOpacity onPress={toggleCommentModal}>
-          <View style={styles.commentcontainer}>
-            <FontAwesome5 name="comment" size={24} style={{ transform: [{ scaleX: -1 }] }} />
-            <Text style={styles.commenttext}>Comment</Text>
+        {items.map((item) => (
+          <View key={item.timestamp}>
+            <Text>Posted by: {item.userEmail}</Text>
+            <Text>{item.text}</Text>
+            {item.image && <Image source={{ uri: item.image }} style={styles.imagePreview} />}
+          
           </View>
-        </TouchableOpacity>
-        <View>
-          <Text>Olivia Rodrigo</Text>
-        </View>
-        <View style={styles.kunwari}>
-          <Text style={styles.commenttext}>piktur 1</Text>
-        </View>
-        <TouchableOpacity onPress={toggleCommentModal}>
-          <View style={styles.commentcontainer}>
-            <FontAwesome5 name="comment" size={24} style={{ transform: [{ scaleX: -1 }] }} />
-            <Text style={styles.commenttext}>Comment</Text>
-          </View>
-        </TouchableOpacity>
-        <View>
-          <Text>Rodrigo</Text>
-        </View>
-        <View style={styles.kunwari}>
-          <Text style={styles.commenttext}>piktur 2</Text>
-        </View>
-        <TouchableOpacity onPress={toggleCommentModal}>
-          <View style={styles.commentcontainer}>
-            <FontAwesome5 name="comment" size={24} style={{ transform: [{ scaleX: -1 }] }} />
-            <Text style={styles.commenttext}>Comment</Text>
-          </View>
-        </TouchableOpacity>
-        <View> 
-          <Text>Olivia</Text>
-        </View>
-        <View style={styles.kunwari}>
-          <Text style={styles.commenttext}>piktur 3</Text>
-        </View>
-        <TouchableOpacity onPress={toggleCommentModal}>
-          <View style={styles.commentcontainer}>
-            <FontAwesome5 name="comment" size={24} style={{ transform: [{ scaleX: -1 }] }} />
-            <Text style={styles.commenttext}>Comment</Text>
-          </View>
-        </TouchableOpacity>
+        ))}
       </ScrollView>
       <View style={styles.rectangle}>
-            <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
-                <MaterialIcons name="post-add" size={40} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-            <AntDesign name="home" size={40} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
-                <Feather name="user" size={40} color="black" />
-            </TouchableOpacity>
-        </View>
+        <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
+          <MaterialIcons name="post-add" size={40} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
+          <AntDesign name="home" size={40} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
+          <Feather name="user" size={40} color="black" />
+        </TouchableOpacity>
+      </View>
       <Modal animationType="slide" transparent={false} visible={isCommentModalVisible}>
         <View style={styles.commentModalContainer}>
           <View style={styles.commentHeader}>
@@ -126,7 +103,8 @@ export default function MainTabTwo({ navigation }) {
     </View>
   );
 }
- 
+
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -255,4 +233,10 @@ const styles = StyleSheet.create({
     margin: 15, 
     borderRadius: 5, 
   },
+    imagePreview: {
+      width: 200, // Set the width of the image as needed
+      height: 200, // Set the height of the image as needed
+      borderRadius: 10,
+    },
 });
+  
