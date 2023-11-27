@@ -1,51 +1,116 @@
+import { LogBox } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Image,Text, ScrollView, TouchableOpacity, TextInput, Modal, Pressable } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Image,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  TextInput,
+  Modal,
+  Pressable,
+} from 'react-native';
 import { Ionicons, AntDesign, MaterialIcons } from '@expo/vector-icons';
 import { Feather } from '@expo/vector-icons';
 import { FontAwesome5 } from '@expo/vector-icons';
 
-import { getDatabase, ref, onValue } from 'firebase/database';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getDatabase, ref, set, push, onValue } from 'firebase/database';
 
 export default function MainTabTwo({ navigation }) {
   const [isCommentModalVisible, setCommentModalVisible] = useState(false);
   const [comment, setComment] = useState('');
   const [items, setItems] = useState([]);
+  const [currentPost, setCurrentPost] = useState(null);
+  const [postComments, setPostComments] = useState([]);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
+    LogBox.ignoreLogs(['Setting a timer']); // Ignore the timer warning for now
+    const auth = getAuth();
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUser(user);
+      } else {
+        setUser(null);
+      }
+    });
+  
     const db = getDatabase();
     const itemsRef = ref(db, 'items');
-
-    const unsubscribe = onValue(itemsRef, (snapshot) => {
+  
+    const unsubscribeItems = onValue(itemsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
         const itemsArray = Object.values(data);
         setItems(itemsArray.reverse());
       }
     });
-
-    return () => unsubscribe();
+  
+    return () => {
+      unsubscribeAuth();
+      unsubscribeItems();
+    };
   }, []);
+  
+  // Add the following useEffect block to handle postComments
+  useEffect(() => {
+    if (currentPost && currentPost.comments) {
+      const commentsArray = Array.isArray(currentPost.comments)
+        ? currentPost.comments
+        : Object.values(currentPost.comments);
+      setPostComments(commentsArray);
+    } else {
+      setPostComments([]);
+    }
+  }, [currentPost]);
+  
 
-  const toggleCommentModal = () => {
+  const toggleCommentModal = (post) => {
+    console.log('Toggle Comment Modal:', post);
+    setCurrentPost(post);
+    // Initialize postComments to an empty array if it's undefined
+    setPostComments(post && post.comments ? post.comments : []);
     setCommentModalVisible(!isCommentModalVisible);
   };
 
-  const handleComment = () => {
-    if (comment.trim() !== '') {
-      console.log('Comment:', comment);
-      setComment('');
-      toggleCommentModal();
+const handleCommentButton = (post) => {
+  console.log('Handle Comment Button:', post);
+  toggleCommentModal(post);
+};
+ 
+
+  const handleComment = async () => {
+    if (comment.trim() !== '' && currentPost && currentPost.postId) {
+      try {
+        const db = getDatabase();
+        const commentsRef = ref(db, `items/${currentPost.postId}/comments`);
+        const newCommentRef = push(commentsRef);
+  
+        await set(newCommentRef, {
+          userEmail: user ? user.email : 'Anonymous',
+          text: comment,
+        });
+  
+        setComment('');
+  
+        // You might want to update the post's comments locally
+        // before closing the comment modal
+        const updatedComments = [...postComments, { userEmail: user ? user.email : 'Anonymous', text: comment }];
+        setPostComments(updatedComments);
+      } catch (error) {
+        console.error('Error adding comment:', error);
+      }
     }
   };
+  
 
   return (
     <View style={styles.container}>
       <Text style={styles.HeadingText}>Lost & Found</Text>
       <View style={styles.searchcontainer}>
-        <TextInput
-          style={styles.TextInput}
-          placeholder="Let's find your things!"
-        />
+        <TextInput style={styles.TextInput} placeholder="Let's find your things!" />
         <TouchableOpacity>
           <Ionicons name="search" style={styles.SearchIcon} />
         </TouchableOpacity>
@@ -59,35 +124,43 @@ export default function MainTabTwo({ navigation }) {
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollcontainer}>
-        {items.map((item) => (
-          <View key={item.timestamp}>
+        {items.map((item,index) => (
+          <View key={`${item.timestamp}-${item.postId}`}>
             <Text>Posted by: {item.userEmail}</Text>
             <Text>{item.text}</Text>
             {item.image && <Image source={{ uri: item.image }} style={styles.imagePreview} />}
-          
+
+            <TouchableOpacity onPress={() => handleCommentButton(item)}>
+              <FontAwesome5 name="comment" size={24} color="black" />
+            </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
-      <View style={styles.rectangle}>
-        <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
-          <MaterialIcons name="post-add" size={40} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-          <AntDesign name="home" size={40} color="black" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
-          <Feather name="user" size={40} color="black" />
-        </TouchableOpacity>
-      </View>
+
       <Modal animationType="slide" transparent={false} visible={isCommentModalVisible}>
-        <View style={styles.commentModalContainer}>
-          <View style={styles.commentHeader}>
-            <Pressable style={styles.backButton} onPress={toggleCommentModal}>
-              <Ionicons name="chevron-back" style={styles.backIcon} />
-              <Text>Back</Text>
-            </Pressable>
-            <Text style={styles.commentHeaderText}>Comments</Text>
-          </View>
+      {isCommentModalVisible && (
+  <View style={styles.commentModalContainer}>
+    <View style={styles.commentHeader}>
+      <Pressable style={styles.backButton} onPress={() => toggleCommentModal(null)}>
+        <Ionicons name="chevron-back" style={styles.backIcon} />
+        <Text>Back</Text>
+      </Pressable>
+      <Text style={styles.commentHeaderText}>Comments</Text>
+    </View>
+    {currentPost && currentPost.postId ? (
+      <View>
+        <Text style={styles.commentHeaderText}>Previous Comments:</Text>
+        {Array.isArray(postComments) && postComments.map((comment, index) => (
+         <View key={`${comment.userEmail}-${index}`} style={styles.commentcontainer}>
+         <Text style={styles.commenttext}>
+           {comment.userEmail}: {comment.text}
+         </Text>
+       </View>
+     ))}
+      </View>
+    ) : (
+      <Text style={styles.commentHeaderText}>No Comments</Text>
+          )}
           <TextInput
             style={styles.commentInput}
             placeholder="Write a comment..."
@@ -99,10 +172,15 @@ export default function MainTabTwo({ navigation }) {
             <Text>Comment</Text>
           </Pressable>
         </View>
+      )}
       </Modal>
+
+      {/* ... (existing code) */}
     </View>
   );
 }
+
+
 
 
 const styles = StyleSheet.create({

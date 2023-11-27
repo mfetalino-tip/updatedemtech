@@ -13,6 +13,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { getDatabase, ref, push } from 'firebase/database';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { set as setDatabaseData } from 'firebase/database';
 
 const ItemForm = ({ navigation }) => {
   const [itemText, setItemText] = useState('');
@@ -67,14 +68,22 @@ const ItemForm = ({ navigation }) => {
 
       const db = getDatabase();
       const itemsRef = ref(db, 'items');
+      
+      // Use push to automatically generate a unique key (postId)
+      const newItemRef = push(itemsRef);
+      const postId = newItemRef.key;
+
       const itemData = {
+        postId: postId, // Save the postId in the database
         text: itemText,
         image: imageUrl,
         timestamp: Date.now(),
-        userEmail: userEmail, // Add the user's email to the item data
+        userEmail: userEmail,
       };
 
-      await push(itemsRef, itemData);
+      await setDatabaseData(newItemRef, itemData);
+
+      // Save data with postId as the key
 
       Alert.alert('Success', 'Item posted successfully!');
       setItemText('');

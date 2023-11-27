@@ -1,8 +1,43 @@
-import React from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons, AntDesign, MaterialIcons, Feather, FontAwesome5 } from '@expo/vector-icons';
- 
+
+
+import { getDatabase, ref, onValue } from 'firebase/database';
+
 export default function MainTab({ navigation }) {
+  const [isCommentModalVisible, setCommentModalVisible] = useState(false);
+  const [comment, setComment] = useState('');
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const db = getDatabase();
+    const itemsRef = ref(db, 'items');
+
+    const unsubscribe = onValue(itemsRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        const itemsArray = Object.values(data);
+        setItems(itemsArray.reverse());
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const toggleCommentModal = () => {
+    setCommentModalVisible(!isCommentModalVisible);
+  };
+
+  const handleComment = () => {
+    if (comment.trim() !== '') {
+      console.log('Comment:', comment);
+      setComment('');
+      toggleCommentModal();
+    }
+  };
+
+
   return (
     <View style={styles.container}>
       <Text style={styles.headingText}>Lost & Found</Text>
@@ -23,11 +58,15 @@ export default function MainTab({ navigation }) {
           <Text style={styles.navigationText}>YOUR POSTS</Text>
         </TouchableOpacity>
       </View>
-      <ScrollView style={styles.scrollContainer}>
-        {/*
-          Add your scrollable content here, e.g., list of items.
-          Make sure to wrap each item in a container with appropriate styles.
-        */}
+      <ScrollView style={styles.scrollcontainer}>
+        {items.map((item) => (
+          <View key={`${item.timestamp}-${item.postId}`}>
+            <Text>Posted by: {item.userEmail}</Text>
+            <Text>{item.text}</Text>
+            {item.image && <Image source={{ uri: item.image }} style={styles.imagePreview} />}
+          
+          </View>
+        ))}
       </ScrollView>
       <View style={styles.rectangle}>
             <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
@@ -102,4 +141,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
   },
-}); 
+
+  imagePreview: {
+    width: '100%', // Set the width to 100% to make it fill the container
+    height: 200, // Set the desired height
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+});
