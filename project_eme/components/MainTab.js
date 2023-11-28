@@ -2,13 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, TextInput } from 'react-native';
 import { Ionicons, AntDesign, MaterialIcons, Feather, FontAwesome5 } from '@expo/vector-icons';
 
-
-import { getDatabase, ref, onValue } from 'firebase/database';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
+import { getDatabase, ref, set, push, onValue } from 'firebase/database';
 
 export default function MainTab({ navigation }) {
   const [isCommentModalVisible, setCommentModalVisible] = useState(false);
   const [comment, setComment] = useState('');
   const [items, setItems] = useState([]);
+  const [currentPost, setCurrentPost] = useState(null);
+  const [postComments, setPostComments] = useState([]);
+  const [user, setUser] = useState(null);
+  const [filteredItems, setFilteredItems] = useState([]); // Added state for filtered items
+  const [searchText, setSearchText] = useState(''); // Added state for search text
+
 
   useEffect(() => {
     const db = getDatabase();
@@ -24,17 +30,69 @@ export default function MainTab({ navigation }) {
 
     return () => unsubscribe();
   }, []);
+    // Add the following useEffect block to handle postComments
+    useEffect(() => {
+      if (currentPost && currentPost.comments) {
+        const commentsArray = Array.isArray(currentPost.comments)
+          ? currentPost.comments
+          : Object.values(currentPost.comments);
+        setPostComments(commentsArray);
+      } else {
+        setPostComments([]);
+      }
+    }, [currentPost]);
 
-  const toggleCommentModal = () => {
+  const toggleCommentModal = (post) => {
+    console.log('Toggle Comment Modal:', post);
+    setCurrentPost(post);
+    // Initialize postComments to an empty array if it's undefined
+    setPostComments(post && post.comments ? post.comments : []);
     setCommentModalVisible(!isCommentModalVisible);
   };
 
-  const handleComment = () => {
-    if (comment.trim() !== '') {
-      console.log('Comment:', comment);
-      setComment('');
-      toggleCommentModal();
+const handleCommentButton = (post) => {
+  console.log('Handle Comment Button:', post);
+  toggleCommentModal(post);
+};
+
+  const handleComment = async () => {
+    if (comment.trim() !== '' && currentPost && currentPost.postId) {
+      try {
+        const db = getDatabase();
+        const commentsRef = ref(db, `items/${currentPost.postId}/comments`);
+        const newCommentRef = push(commentsRef);
+  
+        await set(newCommentRef, {
+          userEmail: user ? user.email : 'Anonymous',
+          text: comment,
+        });
+  
+        setComment('');
+  
+        // You might want to update the post's comments locally
+        // before closing the comment modal
+        const updatedComments = [...postComments, { userEmail: user ? user.email : 'Anonymous', text: comment }];
+        setPostComments(updatedComments);
+      } catch (error) {
+        console.error('Error adding comment:', error);
+      }
     }
+  };
+
+  useEffect(() => {
+    // Filter items based on search text
+    const filtered = items.filter((item) =>
+      item.category && item.category.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredItems(filtered);
+  }, [items, searchText]);
+  
+  const handleSearch = () => {
+    // Perform the search operation
+    const filteredItems = items.filter((item) =>
+      item.category && item.category.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredItems(filteredItems);
   };
 
 
@@ -45,8 +103,10 @@ export default function MainTab({ navigation }) {
         <TextInput
           style={styles.textInput}
           placeholder="Let's find your things!"
+          value={searchText}
+          onChangeText={(text) => setSearchText(text)}
         />
-        <TouchableOpacity>
+        <TouchableOpacity onPress={handleSearch}>
           <Ionicons name="search" style={styles.searchIcon} />
         </TouchableOpacity>
       </View>
@@ -59,10 +119,14 @@ export default function MainTab({ navigation }) {
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollcontainer}>
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <View key={`${item.timestamp}-${item.postId}`}>
             <Text>Posted by: {item.userEmail}</Text>
             <Text>{item.text}</Text>
+            <Text>Location: {item.location}</Text>
+            <Text>Color: {item.color}</Text>
+            <Text>Item: {item.category}</Text>
+            <Text>Date Posted: {formatDate(item.timestamp)}</Text>
             {item.image && <Image source={{ uri: item.image }} style={styles.imagePreview} />}
           
           </View>
@@ -82,6 +146,11 @@ export default function MainTab({ navigation }) {
     </View>
   );
 }
+const formatDate = (timestamp) => {
+  const date = new Date(timestamp);
+  const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' };
+  return date.toLocaleDateString('en-US', options);
+};
  
 const styles = StyleSheet.create({
   container: {

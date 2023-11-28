@@ -32,27 +32,37 @@ export default function MainTabTwo({ navigation }) {
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUser(user);
+        // Fetch items only once for the authenticated user
+        fetchUserItems(user.email);
       } else {
         setUser(null);
+        setItems([]); // Clear items when the user logs out
       }
     });
-  
+
+    return () => {
+      unsubscribeAuth();
+    };
+  }, []);
+
+  const fetchUserItems = (userEmail) => {
     const db = getDatabase();
     const itemsRef = ref(db, 'items');
-  
+
     const unsubscribeItems = onValue(itemsRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        const itemsArray = Object.values(data);
+        const itemsArray = Object.values(data).filter((item) => item.userEmail === userEmail);
         setItems(itemsArray.reverse());
       }
     });
-  
+
     return () => {
-      unsubscribeAuth();
       unsubscribeItems();
     };
-  }, []);
+  };
+  
+
   
   // Add the following useEffect block to handle postComments
   useEffect(() => {
@@ -128,6 +138,10 @@ const handleCommentButton = (post) => {
           <View key={`${item.timestamp}-${item.postId}`}>
             <Text>Posted by: {item.userEmail}</Text>
             <Text>{item.text}</Text>
+            <Text>Location: {item.location}</Text>
+            <Text>Color: {item.color}</Text>
+            <Text>Item: {item.category}</Text>
+            <Text>Date Posted: {formatDate(item.timestamp)}</Text>
             {item.image && <Image source={{ uri: item.image }} style={styles.imagePreview} />}
 
             <TouchableOpacity onPress={() => handleCommentButton(item)}>
@@ -181,7 +195,11 @@ const handleCommentButton = (post) => {
 }
 
 
-
+const formatDate = (timestamp) => {
+  const date = new Date(timestamp);
+  const options = { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric' };
+  return date.toLocaleDateString('en-US', options);
+};
 
 const styles = StyleSheet.create({
   container: {

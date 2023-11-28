@@ -20,6 +20,9 @@ const ItemForm = ({ navigation }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  const [location, setLocation] = useState('');
+  const [color, setColor] = useState('');
+  const [category, setCategory] = useState('');
 
   useEffect(() => {
     const auth = getAuth();
@@ -61,6 +64,12 @@ const ItemForm = ({ navigation }) => {
     setIsSubmitting(true);
 
     try {
+      if (!itemText.trim() || !location.trim() || !color.trim() || !category.trim()) {
+        // Show an error message if any of the required fields is blank
+        Alert.alert('Error', 'Please fill out all required fields (location, color, category).');
+        return;
+      }
+
       let imageUrl = '';
       if (selectedImage) {
         imageUrl = await uploadImage(selectedImage.localUri);
@@ -68,33 +77,35 @@ const ItemForm = ({ navigation }) => {
 
       const db = getDatabase();
       const itemsRef = ref(db, 'items');
-      
-      // Use push to automatically generate a unique key (postId)
+
       const newItemRef = push(itemsRef);
       const postId = newItemRef.key;
 
       const itemData = {
-        postId: postId, // Save the postId in the database
+        postId: postId,
         text: itemText,
         image: imageUrl,
+        location: location, // New fields
+        color: color,
+        category: category,
         timestamp: Date.now(),
         userEmail: userEmail,
       };
 
       await setDatabaseData(newItemRef, itemData);
 
-      // Save data with postId as the key
-
       Alert.alert('Success', 'Item posted successfully!');
       setItemText('');
       setSelectedImage(null);
+      setLocation(''); // Clear input fields
+      setColor('');
+      setCategory('');
     } catch (error) {
       Alert.alert('Error', 'Error posting item: ' + error.message);
     } finally {
       setIsSubmitting(false);
     }
   };
-
   return (
     <View style={styles.container}>
       <TextInput
@@ -103,6 +114,24 @@ const ItemForm = ({ navigation }) => {
         value={itemText}
         onChangeText={setItemText}
         multiline
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Location"
+        value={location}
+        onChangeText={setLocation}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Color"
+        value={color}
+        onChangeText={setColor}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Category"
+        value={category}
+        onChangeText={setCategory}
       />
       <TouchableOpacity style={styles.imagePicker} onPress={selectImage}>
         {selectedImage ? (
@@ -124,6 +153,8 @@ const ItemForm = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+
+  
   container: {
     flex: 1,
     padding: 20,
