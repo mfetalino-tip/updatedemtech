@@ -5,26 +5,26 @@ import { getDatabase, ref, get, set } from 'firebase/database';
 import { updateEmail, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 import { AntDesign, MaterialIcons, Feather } from '@expo/vector-icons';
 import YourImage from './pictures/profile.png';
- 
+
 export default function ProfileSetting({ navigation }) {
   const [email, setEmail] = useState('');
   const [newEmail, setNewEmail] = useState('');
   const [studentNumber, setStudentNumber] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
- 
+
   const db = getDatabase();
- 
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const user = auth.currentUser;
- 
+
         if (user) {
           const userId = user.uid;
           const userRef = ref(db, `users/${userId}`);
           const snapshot = await get(userRef);
- 
+
           if (snapshot.exists()) {
             const userData = snapshot.val();
             setEmail(userData.email || '');
@@ -35,37 +35,37 @@ export default function ProfileSetting({ navigation }) {
         console.error('Error fetching user data:', error.message);
       }
     };
- 
+
     fetchUserData();
   }, []);
- 
+
   const handleEdit = () => {
     setIsEditing(true);
   };
- 
+
   const handleSave = async () => {
     try {
       const user = auth.currentUser;
- 
+
       // Re-authenticate the user before making changes
       const credential = EmailAuthProvider.credential(user.email, currentPassword);
       await reauthenticateWithCredential(user, credential);
- 
+
       // Update Realtime Database
       const userId = user.uid;
       await set(ref(db, `users/${userId}`), {
         email: newEmail || email,
         studentNumber: studentNumber,
       });
- 
+
       if (newEmail && newEmail !== email) {
         // Update user's email in Authentication
         await updateEmail(user, newEmail);
       }
- 
+
       // Update Authentication profile
       await updateUserProfile(user, { displayName: studentNumber });
- 
+
       setIsEditing(false);
       alert('Profile updated successfully!');
     } catch (error) {
@@ -73,7 +73,7 @@ export default function ProfileSetting({ navigation }) {
       console.error('Error updating profile:', error.message);
     }
   };
- 
+
   const handleLogout = async () => {
     try {
       await userSignOut(auth);
@@ -82,24 +82,24 @@ export default function ProfileSetting({ navigation }) {
       console.error('Error logging out:', error.message);
     }
   };
- 
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Profile Settings</Text>
       <View>
-          <Image source={YourImage} style={styles.profileimage} />
+        <Image source={YourImage} style={styles.profileimage} />
       </View>
       <TextInput
         style={styles.profiletext}
         placeholder="Name"
-        placeholderTextColor="#E9D735"
+        placeholderTextColor="#485E6E"
         editable={isEditing}
-        />
+      />
       <View style={styles.inputborder}>
         <TextInput
           style={styles.inputtext}
           placeholder="Email"
-          placeholderTextColor="#E9D735"
+          placeholderTextColor="#485E6E"
           value={isEditing ? newEmail : email}
           onChangeText={(text) => setNewEmail(text)} // <-- Set the new email when editing
           editable={isEditing}
@@ -109,7 +109,7 @@ export default function ProfileSetting({ navigation }) {
         <TextInput
           style={styles.inputtext}
           placeholder="Student Number"
-          placeholderTextColor="#E9D735"
+          placeholderTextColor="#485E6E"
           value={studentNumber}
           onChangeText={(text) => setStudentNumber(text)}
           editable={isEditing}
@@ -120,7 +120,7 @@ export default function ProfileSetting({ navigation }) {
           <TextInput
             style={styles.inputtext}
             placeholder="Current Password"
-            placeholderTextColor="#E9D735"
+            placeholderTextColor="#485E6E"
             secureTextEntry={true}
             value={currentPassword}
             onChangeText={(text) => setCurrentPassword(text)}
@@ -144,37 +144,37 @@ export default function ProfileSetting({ navigation }) {
         </TouchableOpacity>
       </View>
       {/* Navigation Icons */}
-      <View style={styles.rectangle}>
-            <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
-                <MaterialIcons name="post-add" size={40} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-            <AntDesign name="home" size={40} color="black" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
-                <Feather name="user" size={40} color="black" />
-            </TouchableOpacity>
-        </View>
+      <View style={styles.bottomNavigation}>
+        <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
+          <MaterialIcons name="post-add" size={32} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
+          <AntDesign name="home" size={32} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
+          <Feather name="user" size={32} color="black" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
- 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#394B58',
+    backgroundColor: '#fff',
     alignItems: 'center',
     padding: 20,
   },
   title: {
     fontSize: 24,
-    color: '#E9D735',
+    color: '#485E6E',
     fontWeight: 'bold',
     marginBottom: 20,
     marginTop: 50,
   },
   inputborder: {
-    borderBottomColor: 'white',
+    borderBottomColor: '#485E6E',
     borderBottomWidth: 1,
     width: '100%',
     marginBottom: 25,
@@ -182,12 +182,12 @@ const styles = StyleSheet.create({
   inputtext: {
     fontSize: 15,
     fontStyle: 'italic',
-    color: '#E9D735',
+    color: '#485E6E',
     paddingBottom: 20,
     paddingTop: 15,
   },
   buttonContainer: {
-    backgroundColor: '#E9D735',
+    backgroundColor: '#485E6E',
     paddingVertical: 10,
     paddingHorizontal: 20,
     alignItems: 'center',
@@ -195,16 +195,16 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   buttontext: {
-    color: 'black',
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },
-  rectangle: {
+  bottomNavigation: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: '#485E6E',
-    height: 70,
+    height: 60,
     paddingHorizontal: 20,
     position: 'absolute',
     bottom: 0,
@@ -220,6 +220,6 @@ const styles = StyleSheet.create({
     marginTop: 5,
     fontSize: 20,
     textAlign: 'center',
-    color: '#E9D735',
-  }
+    color: '#485E6E',
+  },
 });

@@ -153,54 +153,57 @@ const ItemForm = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-
-  
   container: {
     flex: 1,
     padding: 20,
     marginBottom: 100,
-    backgroundColor: '#F0F2F5',
+    marginTop: 30,
+    backgroundColor: '#EFEFF4', // Light grayish background
     justifyContent: 'flex-start',
   },
   input: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF', // White background for input
     padding: 15,
     borderRadius: 10,
-    borderColor: '#CCD0D5',
+    borderColor: '#CED0D9', // Light gray border
     borderWidth: 1,
     fontSize: 16,
     marginBottom: 15,
+    color: '#333333', // Dark text color
   },
   imagePicker: {
-    backgroundColor: '#E7F3FF',
+    backgroundColor: '#DCEBFF', // Light blue background
     padding: 10,
     borderRadius: 10,
     alignItems: 'center',
     marginBottom: 15,
   },
   imagePickerText: {
-    color: '#1877F2',
+    color: '#1E88E5', // Blue text color
     fontSize: 16,
+    fontWeight: 'bold', // Bold text
   },
   imagePreview: {
     width: '100%',
     height: 200,
     borderRadius: 10,
+    marginBottom: 15,
   },
   button: {
-    backgroundColor: '#1877F2',
+    backgroundColor: '#1E88E5', // Dark blue button
     padding: 15,
     borderRadius: 10,
     alignItems: 'center',
   },
   buttonText: {
-    color: 'white',
+    color: '#FFFFFF', // White text color
     fontSize: 16,
     fontWeight: 'bold',
   },
   buttonDisabled: {
-    backgroundColor: '#ACC0D8',
+    backgroundColor: '#B5C7D3', // Lighter blue for disabled state
   },
 });
 
 export default ItemForm;
+

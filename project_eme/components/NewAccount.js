@@ -17,7 +17,7 @@ return (
         <Text style={[styles.phrase, {marginBottom: 100}]}>Welcome to the Lost and Found community. Begin your search now!</Text>
     <TouchableOpacity
         style={[styles.buttonContainer, { width: 200, borderRadius: 10 }]}
-        onPress={() => navigation.navigate('Login')}>
+        onPress={() => navigation.navigate('MainTab')}>
         <Text style={styles.buttontext}>GET STARTED </Text>
     </TouchableOpacity>
     </View>

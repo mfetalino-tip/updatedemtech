@@ -1,70 +1,49 @@
-import { LogBox } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import {
-  StyleSheet,
-  View,
-  Image,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  Modal,
-  Pressable,
-} from 'react-native';
-import { Ionicons, AntDesign, MaterialIcons } from '@expo/vector-icons';
-import { Feather } from '@expo/vector-icons';
-import { FontAwesome5 } from '@expo/vector-icons';
-
+import { StyleSheet, View, Text, Image, ScrollView, TouchableOpacity, TextInput, Modal, Pressable } from 'react-native';
+import { Ionicons, AntDesign, MaterialIcons, Feather } from '@expo/vector-icons';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
-import { getDatabase, ref, set, push, onValue } from 'firebase/database';
+import { getDatabase, ref, set, push, onValue, query, orderByChild, equalTo } from 'firebase/database';
 
 export default function MainTabTwo({ navigation }) {
   const [isCommentModalVisible, setCommentModalVisible] = useState(false);
   const [comment, setComment] = useState('');
-  const [items, setItems] = useState([]);
   const [currentPost, setCurrentPost] = useState(null);
   const [postComments, setPostComments] = useState([]);
   const [user, setUser] = useState(null);
 
+  const [userPosts, setUserPosts] = useState([]);
+  const [filteredUserPosts, setFilteredUserPosts] = useState([]);
+  const [searchText, setSearchText] = useState('');
+
   useEffect(() => {
-    LogBox.ignoreLogs(['Setting a timer']); // Ignore the timer warning for now
     const auth = getAuth();
     const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        setUser(user);
-        // Fetch items only once for the authenticated user
-        fetchUserItems(user.email);
-      } else {
-        setUser(null);
-        setItems([]); // Clear items when the user logs out
-      }
+      setUser(user);
     });
+    const db = getDatabase();
+    const postsRef = ref(db, 'items');
+    
+    // Fetch posts only for the authenticated user
+    if (user) {
+      const userPostsQuery = query(postsRef, orderByChild('userEmail'), equalTo(user.email));
+      const unsubscribePosts = onValue(userPostsQuery, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const userPostsArray = Object.values(data);
+          setUserPosts(userPostsArray.reverse());
+        }
+      });
+
+      return () => {
+        unsubscribePosts();
+      };
+    }
 
     return () => {
       unsubscribeAuth();
     };
-  }, []);
+  }, [user]);
 
-  const fetchUserItems = (userEmail) => {
-    const db = getDatabase();
-    const itemsRef = ref(db, 'items');
-
-    const unsubscribeItems = onValue(itemsRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        const itemsArray = Object.values(data).filter((item) => item.userEmail === userEmail);
-        setItems(itemsArray.reverse());
-      }
-    });
-
-    return () => {
-      unsubscribeItems();
-    };
-  };
-  
-
-  
-  // Add the following useEffect block to handle postComments
   useEffect(() => {
     if (currentPost && currentPost.comments) {
       const commentsArray = Array.isArray(currentPost.comments)
@@ -75,125 +54,149 @@ export default function MainTabTwo({ navigation }) {
       setPostComments([]);
     }
   }, [currentPost]);
-  
+
+  useEffect(() => {
+    const filtered = userPosts.filter((item) =>
+      item.category && item.category.toLowerCase().includes(searchText.toLowerCase())
+    );
+    setFilteredUserPosts(filtered);
+  }, [userPosts, searchText]);
+
+  const handleSearch = () => {
+    setFilteredUserPosts(userPosts.filter((item) => item.category && item.category.toLowerCase().includes(searchText.toLowerCase())));
+  };
+
+  const handleCommentButton = (post) => {
+    toggleCommentModal(post);
+  };
 
   const toggleCommentModal = (post) => {
-    console.log('Toggle Comment Modal:', post);
     setCurrentPost(post);
-    // Initialize postComments to an empty array if it's undefined
-    setPostComments(post && post.comments ? post.comments : []);
     setCommentModalVisible(!isCommentModalVisible);
   };
 
-const handleCommentButton = (post) => {
-  console.log('Handle Comment Button:', post);
-  toggleCommentModal(post);
-};
- 
-
   const handleComment = async () => {
-    if (comment.trim() !== '' && currentPost && currentPost.postId) {
+    if (comment.trim() !== '' && currentPost && currentPost.postId && user) {
       try {
         const db = getDatabase();
         const commentsRef = ref(db, `items/${currentPost.postId}/comments`);
         const newCommentRef = push(commentsRef);
   
         await set(newCommentRef, {
-          userEmail: user ? user.email : 'Anonymous',
+          userEmail: user.email, 
           text: comment,
         });
   
         setComment('');
   
-        // You might want to update the post's comments locally
-        // before closing the comment modal
-        const updatedComments = [...postComments, { userEmail: user ? user.email : 'Anonymous', text: comment }];
+        const updatedComments = [...postComments, { userEmail: user.email, text: comment }];
         setPostComments(updatedComments);
       } catch (error) {
         console.error('Error adding comment:', error);
       }
     }
   };
-  
 
   return (
     <View style={styles.container}>
-      <Text style={styles.HeadingText}>Lost & Found</Text>
-      <View style={styles.searchcontainer}>
-        <TextInput style={styles.TextInput} placeholder="Let's find your things!" />
-        <TouchableOpacity>
-          <Ionicons name="search" style={styles.SearchIcon} />
+      <View style={styles.header}>
+        <Text style={styles.logo}>Lost & Found</Text>
+        <View style={styles.searchContainer}>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search"
+            value={searchText}
+            onChangeText={(text) => setSearchText(text)}
+          />
+          <TouchableOpacity onPress={handleSearch}>
+            <Ionicons name="search" style={styles.searchIcon} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity style={styles.tab} onPress={() => navigation.navigate('MainTab')}>
+          <Text style={styles.tabText}>FOR YOU</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.tab} onPress={() => navigation.navigate('MainTabTwo')}>
+          <Text style={styles.tabText}>YOUR POSTS</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.NavigationSearch}>
-        <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
-          <Text style={styles.NavigationText}>FOR YOU</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => navigation.navigate('MainTabTwo')}>
-          <Text style={styles.NavigationText}>YOUR POSTS</Text>
-        </TouchableOpacity>
-      </View>
-      <ScrollView style={styles.scrollcontainer}>
-        {items.map((item,index) => (
-          <View key={`${item.timestamp}-${item.postId}`}>
-            <Text>Posted by: {item.userEmail}</Text>
-            <Text>{item.text}</Text>
-            <Text>Location: {item.location}</Text>
-            <Text>Color: {item.color}</Text>
-            <Text>Item: {item.category}</Text>
-            <Text>Date Posted: {formatDate(item.timestamp)}</Text>
+
+      <ScrollView style={styles.scrollContainer}>
+        {filteredUserPosts.map((item) => (
+          <View key={`${item.timestamp}-${item.postId}`} style={styles.postContainer}>
+            <View style={styles.postHeader}>
+              <Text style={styles.postUser}>{item.userEmail}</Text>
+              <Text style={styles.postDate}>{formatDate(item.timestamp)}</Text>
+            </View>
+
+            <Text style={styles.postText}>{item.text}</Text>
+            <Text style={styles.postDetail}>Location: {item.location}</Text>
+            <Text style={styles.postDetail}>Color: {item.color}</Text>
+            <Text style={styles.postDetail}>Item: {item.category}</Text>
+
             {item.image && <Image source={{ uri: item.image }} style={styles.imagePreview} />}
 
-            <TouchableOpacity onPress={() => handleCommentButton(item)}>
-              <FontAwesome5 name="comment" size={24} color="black" />
+            <TouchableOpacity style={styles.commentButton} onPress={() => handleCommentButton(item)}>
+              <Text style={styles.commentButtonText}>Comment</Text>
             </TouchableOpacity>
           </View>
         ))}
       </ScrollView>
 
       <Modal animationType="slide" transparent={false} visible={isCommentModalVisible}>
-      {isCommentModalVisible && (
-  <View style={styles.commentModalContainer}>
-    <View style={styles.commentHeader}>
-      <Pressable style={styles.backButton} onPress={() => toggleCommentModal(null)}>
-        <Ionicons name="chevron-back" style={styles.backIcon} />
-        <Text>Back</Text>
-      </Pressable>
-      <Text style={styles.commentHeaderText}>Comments</Text>
-    </View>
-    {currentPost && currentPost.postId ? (
-      <View>
-        <Text style={styles.commentHeaderText}>Previous Comments:</Text>
-        {Array.isArray(postComments) && postComments.map((comment, index) => (
-         <View key={`${comment.userEmail}-${index}`} style={styles.commentcontainer}>
-         <Text style={styles.commenttext}>
-           {comment.userEmail}: {comment.text}
-         </Text>
-       </View>
-     ))}
-      </View>
-    ) : (
-      <Text style={styles.commentHeaderText}>No Comments</Text>
-          )}
-          <TextInput
-            style={styles.commentInput}
-            placeholder="Write a comment..."
-            value={comment}
-            onChangeText={(text) => setComment(text)}
-            multiline
-          />
-          <Pressable style={styles.commentButton} onPress={handleComment}>
-            <Text>Comment</Text>
-          </Pressable>
-        </View>
-      )}
+        {isCommentModalVisible && (
+          <View style={styles.commentModalContainer}>
+            <View style={styles.commentHeader}>
+              <Pressable style={styles.backButton} onPress={() => toggleCommentModal(null)}>
+                <Ionicons name="chevron-back" style={styles.backIcon} />
+                <Text>Back</Text>
+              </Pressable>
+              <Text style={styles.commentHeaderText}>Comments</Text>
+            </View>
+            {currentPost && currentPost.postId ? (
+              <View>
+                <Text style={styles.commentHeaderText}>Previous Comments:</Text>
+                {Array.isArray(postComments) && postComments.map((comment, index) => (
+                  <View key={`${comment.userEmail}-${index}`} style={styles.commentcontainer}>
+                    <Text style={styles.commenttext}>
+                      {comment.userEmail}: {comment.text}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <Text style={styles.commentHeaderText}>No Comments</Text>
+            )}
+            <TextInput
+              style={styles.commentInput}
+              placeholder="Write a comment..."
+              value={comment}
+              onChangeText={(text) => setComment(text)}
+              multiline
+            />
+            <Pressable style={styles.commentButton} onPress={handleComment}>
+              <Text>Comment</Text>
+            </Pressable>
+          </View>
+        )}
       </Modal>
 
-      {/* ... (existing code) */}
+      <View style={styles.bottomNavigation}>
+        <TouchableOpacity onPress={() => navigation.navigate('CreatePost')}>
+          <MaterialIcons name="post-add" size={32} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('MainTab')}>
+          <AntDesign name="home" size={32} color="black" />
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.navigate('Tab5')}>
+          <Feather name="user" size={32} color="black" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
-
 
 const formatDate = (timestamp) => {
   const date = new Date(timestamp);
@@ -204,135 +207,187 @@ const formatDate = (timestamp) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#394B58',
-    padding: 10,
- 
+    backgroundColor: '#fff',
   },
-  scrollcontainer: {
+  header: {
     backgroundColor: 'white',
+    padding: 15,
+    paddingBottom: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
   },
-  NavigationSearch: {
+  logo: {
+    color: 'black',
+    marginTop: 25,
+    fontSize: 24,
+    fontWeight: 'bold',
+    fontFamily: 'Arial',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    marginTop: 10,
+    backgroundColor: '#D9D9D9',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingVertical: 10,
+    fontFamily: 'Helvetica',
+    color: '#333',
+  },
+  searchIcon: {
+    fontSize: 24,
+    color: '#485E6E',
+    marginLeft: 10,
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 10,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    paddingBottom: 10,
+  },
+  tab: {
+    padding: 10,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'Verdana',
+    color: '#485E6E',
+  },
+  scrollContainer: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  postContainer: {
+    backgroundColor: '#fff',
+    margin: 10,
+    padding: 10,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
+  postHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginHorizontal: 20,
+  },
+  postUser: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    fontFamily: 'Georgia',
+    color: '#333',
+  },
+  postDate: {
+    fontSize: 13,
+    color: '#888',
+  },
+  postText: {
+    fontSize: 16,
+    marginTop: 10,
+  },
+  postDetail: {
+    fontSize: 14,
+    color: '#555',
+    marginTop: 5,
+  },
+  imagePreview: {
+    width: '100%',
+    height: 200,
+    borderRadius: 10,
     marginVertical: 10,
   },
-  NavigationText: {
-    fontSize: 22,
-    fontWeight: 'bold',
+  commentButton: {
+    backgroundColor: '#485E6E',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    alignItems: 'center',
   },
-  HeadingText: {
-    marginTop: 20,
-    fontSize: 30,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  rectangle: {
+  bottomNavigation: {
     flexDirection: 'row',
-    flex: 1,
     justifyContent: 'space-around',
     alignItems: 'center',
     backgroundColor: '#485E6E',
-    height: 70,
+    height: 60,
     paddingHorizontal: 20,
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 1,
-  },
-  searchcontainer: {
-    backgroundColor: '#D9D9D9',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderRadius: 10,
-    padding: 10,
-    marginHorizontal: 20,
-    marginVertical: 10,
-  },
-  TextInput: {
-    fontSize: 19,
-    fontWeight: 'bold',
-    width: '80%',
-    textAlign: 'center',
-  },
-  SearchIcon: {
-    fontSize: 30, 
-    color: '#485E6E', 
-  },
-  commentcontainer: {
-    flexDirection: 'row',
-    backgroundColor: '#D9D9D9',
-    marginHorizontal: 20,
-    marginVertical: 10,
-    padding: 10,
-    justifyContent: 'space-evenly',
-  },
-  commenttext: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  kunwari: {
-    backgroundColor: '#D9D9D9',
-    marginHorizontal: 20,
-    marginVertical: 10,
-    padding: 70,
   },
   commentModalContainer: {
     flex: 1,
-    backgroundColor: '#F0F0F0',
+    padding: 20,
   },
   commentHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    justifyContent: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: '#485E6E', 
-    paddingBottom: 20,
-    paddingTop: 40,
-    backgroundColor: '#485E6E', 
+    marginBottom: 10,
   },
   backButton: {
-    position: 'absolute',
-    top: 30,
-    left: 20,
     flexDirection: 'row',
+    marginTop: 30,
     alignItems: 'center',
   },
   backIcon: {
-    fontSize: 24,
+    fontSize: 20,
     marginRight: 5,
-    color: 'white', 
   },
   commentHeaderText: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: 'bold',
-    color: 'white', 
+    fontFamily: 'Verdana',
+    color: '#485E6E',
+  },
+  commentListContainer: {
+    flex: 1,
+    marginTop: 10,
+  },
+  commentContainer: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    paddingBottom: 10,
+    marginBottom: 10,
+  },
+  commentUser: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    fontFamily: 'Arial',
+    color: '#485E6E',
+  },
+  commentText: {
+    fontSize: 14,
+    color: '#333',
+    marginTop: 5,
   },
   commentInput: {
-    padding: 15, 
-    fontSize: 18,
-    borderBottomWidth: 1,
-    borderBottomColor: '#DADADA', 
-    margin: 15, 
-    paddingBottom: 25, 
-    backgroundColor: 'white', 
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#ddd',
     borderRadius: 5,
-    color: '#333', 
+    paddingHorizontal: 10,
+    marginBottom: 10,
   },
   commentButton: {
-    backgroundColor: '#485E6E', 
+    backgroundColor: '#485E6E',
+    padding: 10,
+    borderRadius: 5,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-    margin: 15, 
-    borderRadius: 5, 
   },
-    imagePreview: {
-      width: 200, // Set the width of the image as needed
-      height: 200, // Set the height of the image as needed
-      borderRadius: 10,
-    },
+  commentButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontFamily: 'Arial',
+  },
 });
-  

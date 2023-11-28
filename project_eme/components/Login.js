@@ -16,7 +16,7 @@ export default function Login({ navigation }) {
       setTimeout(() => {
         navigation.navigate('MainTab');
       }, 2000);
-    } catch (error) {
+    } catch (error) { 
       alert(error.message);
     }
   };

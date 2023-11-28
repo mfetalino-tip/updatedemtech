@@ -68,7 +68,7 @@ export default function SignUpScreen({ navigation }) {
           <Text style={styles.title}>CREATE AN ACCOUNT</Text>
         </View>
       </View>
-      <View>
+      <View> 
         <Text style={[styles.phrase, { marginBottom: 50 }]}>Don't wait, start finding your lost items - Sign up today!</Text>
       </View>
       <View style={styles.inputborder}>
@@ -99,7 +99,7 @@ export default function SignUpScreen({ navigation }) {
           onChangeText={(text) => setPassword(text)}
         />
       </View>
-      <View style={styles.inputborder}>
+      <View style={styles.inputborder}> 
         <TextInput
           placeholder="*Confirm Password"
           style={styles.inputtext}
